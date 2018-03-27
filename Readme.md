@@ -1,7 +1,7 @@
 # Личный проект «Кекстаграм» [![Build status][travis-image]][travis-url]
 
 * Студент: [Ольга Коваль](https://up.htmlacademy.ru/javascript/13/user/114667).
-* Наставник: `Неизвестно`.
+* Наставник: [undefined :crying_cat_face:](https://htmlacademy.ru/404).
 
 ---
 
