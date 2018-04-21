@@ -312,14 +312,20 @@ var getEffectVolume = function (effectName, rangeValue) {
   return (filterNameToRange[effectName].max - filterNameToRange[effectName].min) / SCALE_MAX * rangeValue + filterNameToRange[effectName].min;
 };
 
+var isFloat = function (value) {
+  return Number(value) === value && value % 1 !== 0;
+};
+
 // Получение стилей эффекта
 var getFilterStyles = function (effectName, effectValue) {
+  effectValue = isFloat(effectValue) ? effectValue.toFixed(1) : effectValue;
+
   var effectToFilterStyles = {
-    chrome: 'filter: grayscale(' + effectValue.toFixed(1) + ');',
-    sepia: 'filter: sepia(' + effectValue.toFixed(1) + ');',
+    chrome: 'filter: grayscale(' + effectValue + ');',
+    sepia: 'filter: sepia(' + effectValue + ');',
     marvin: 'filter: invert(' + parseInt(effectValue, 10) + '%);',
-    phobos: 'filter: blur(' + effectValue.toFixed(1) + 'px);',
-    heat: 'filter: brightness(' + effectValue.toFixed(1) + ');',
+    phobos: 'filter: blur(' + effectValue + 'px);',
+    heat: 'filter: brightness(' + effectValue + ');',
     none: 'filter: ' + effectValue,
     defaultEffect: 'filter: none'
   };
