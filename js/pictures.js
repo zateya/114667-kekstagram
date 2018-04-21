@@ -94,7 +94,13 @@ var filterNameToRange = {
   }
 };
 
-var pictureTemplate = document.querySelector('#picture').content.querySelector('a');
+var ResizeParam = {
+  MIN: 25,
+  MAX: 100,
+  STEP: 25
+};
+
+var pictureTemplate = document.querySelector('#picture').content.querySelector('.picture__link');
 var picturesList = document.querySelector('.pictures');
 var bigPicture = document.querySelector('.big-picture');
 var bigPictureClose = bigPicture.querySelector('.big-picture__cancel');
@@ -102,15 +108,28 @@ var socialCommentCount = document.querySelector('.social__comment-count');
 var socialCommentLoader = document.querySelector('.social__comment-loadmore');
 var picturesFragment = document.createDocumentFragment();
 
-var uploadInput = document.querySelector('#upload-file');
-var uploadOverlay = document.querySelector('.img-upload__overlay');
-var uploadClose = uploadOverlay.querySelector('.img-upload__cancel');
-var uploadImage = document.querySelector('.img-upload__preview');
+var uploadForm = document.querySelector('.img-upload__form');
+var uploadField = uploadForm.querySelector('#upload-file');
+var uploadOverlay = uploadForm.querySelector('.img-upload__overlay');
+var uploadClose = uploadForm.querySelector('.img-upload__cancel');
+var uploadImage = uploadForm.querySelector('.img-upload__preview');
+var uploadScale = uploadForm.querySelector('.img-upload__scale');
 
-var pinScale = uploadOverlay.querySelector('.scale__pin');
-var scaleInput = uploadOverlay.querySelector('.scale__value');
-var effectFilters = document.querySelectorAll('.effects__radio');
-var activeFilter = uploadOverlay.querySelector('.effects__radio[checked]');
+var hashtagsField = uploadForm.querySelector('.text__hashtags');
+var commentField = uploadForm.querySelector('.text__description');
+var uploadSubmit = uploadForm.querySelector('.img-upload__submit');
+
+var pinScale = uploadForm.querySelector('.scale__pin');
+var scaleInput = uploadForm.querySelector('.scale__value');
+var effectFilters = uploadForm.querySelectorAll('.effects__radio');
+var originalFilter = uploadForm.querySelector('#effect-none');
+
+var resize = uploadForm.querySelector('.img-upload__resize');
+var resizeMinus = resize.querySelector('.resize__control--minus');
+var resizePlus = resize.querySelector('.resize__control--plus');
+var resizeField = resize.querySelector('.resize__control--value');
+var currentResizeValue = null;
+var activeFilter = null;
 
 var isEscEvent = function (evt, action) {
   if (evt.keyCode === ESC_KEYCODE) {
@@ -210,85 +229,243 @@ var renderBigPicture = function (pictureData) {
   renderComments(pictureData.comments);
 };
 
+// Нажатие клавиши Esc при открытии большой фотографии
 var onBigPictureKeyDown = function (evt) {
   isEscEvent(evt, closeBigPicture);
 };
 
+// Открытие большой фотографии
 var openBigPicture = function (pictureData) {
   renderBigPicture(pictureData);
   bigPicture.classList.remove('hidden');
   document.addEventListener('keydown', onBigPictureKeyDown);
 };
 
+// Закрытие большой фотографии
 var closeBigPicture = function () {
   bigPicture.classList.add('hidden');
+  uploadForm.reset();
   document.removeEventListener('keydown', onBigPictureKeyDown);
 };
 
+// Клик по кнопке Закрыть в окне с большой фотографией
 bigPictureClose.addEventListener('click', function () {
   closeBigPicture();
 });
 
+// Нажатие клавиши Esc в окне с загрузкой фотографии
 var onUploadKeydown = function (evt) {
-  isEscEvent(evt, closeUpload);
+  if (evt.target !== hashtagsField && evt.target !== commentField) {
+    isEscEvent(evt, closeUpload);
+  }
 };
 
+// Установка уровня эффекта по умолчанию
+var setScaleDefaultState = function () {
+  scaleInput.value = SCALE_MAX;
+};
+
+// Сброс фильтров
+var resetFilters = function () {
+  originalFilter.checked = true;
+  currentResizeValue = ResizeParam.MAX;
+  uploadImage.style = '';
+  setScaleDefaultState();
+};
+
+// Открытие окна с загрузкой фотографии
 var openUpload = function () {
   uploadOverlay.classList.remove('hidden');
+  originalFilter.checked = true;
+  activeFilter = originalFilter;
+  setResizeValue(ResizeParam.MAX);
+  resetFilters();
   document.addEventListener('keydown', onUploadKeydown);
 };
 
+// Закрытие окна с загрузкой фотографии
 var closeUpload = function () {
   uploadOverlay.classList.add('hidden');
   document.removeEventListener('keydown', onUploadKeydown);
-  uploadInput.value = '';
+  uploadField.value = '';
 };
 
-uploadInput.addEventListener('change', function () {
+// Событие изменения загруженной фотографии
+uploadField.addEventListener('change', function () {
   openUpload();
 });
 
+// Событие клика по кнопке Закрыть в окне с загрузкой фотографии
 uploadClose.addEventListener('click', function () {
   closeUpload();
 });
 
-var getEffectValue = function (effectName, rangeValue) {
+var setResizeValue = function (value) {
+  resizeField.value = value + '%';
+};
+
+var getResizeStyle = function (value) {
+  return 'transform: scale(' + value / 100 + ')';
+};
+
+// Получение уровня эффекта
+var getEffectVolume = function (effectName, rangeValue) {
   return (filterNameToRange[effectName].max - filterNameToRange[effectName].min) / SCALE_MAX * rangeValue + filterNameToRange[effectName].min;
 };
 
+// Получение стилей эффекта
 var getFilterStyles = function (effectName, effectValue) {
   var effectToFilterStyles = {
     chrome: 'filter: grayscale(' + effectValue + ');',
     sepia: 'filter: sepia(' + effectValue + ');',
     marvin: 'filter: invert(' + effectValue + '%);',
     phobos: 'filter: blur(' + effectValue + 'px);',
-    heat: 'filter: brightness(' + effectValue + ');'
+    heat: 'filter: brightness(' + effectValue + ');',
+    none: 'filter: ' + effectValue,
+    defaultEffect: 'filter: none'
   };
 
-  return effectToFilterStyles[effectName];
+  return effectToFilterStyles[effectName] || effectToFilterStyles['defaultEffect'];
 };
 
+// Применение стилей к загруженной фотографии
 var setImageStyle = function () {
   var filterName = activeFilter.value;
-  var filterValue = getEffectValue(activeFilter.value, scaleInput.value);
-  uploadImage.style = getFilterStyles(filterName, filterValue);
+  setResizeValue(currentResizeValue);
+  var filterValue = (activeFilter !== originalFilter) ? getEffectVolume(activeFilter.value, scaleInput.value) : originalFilter.value;
+  uploadImage.style = getResizeStyle(currentResizeValue) + ';' + getFilterStyles(filterName, filterValue);
 };
 
-var setFiltersEvents = function () {
+// Скрытие ползунка уровня эффекта
+var hideScale = function () {
+  uploadScale.style.display = 'none';
+};
+
+// Показ ползунка уровня эффекта
+var showScale = function () {
+  uploadScale.style.display = '';
+};
+
+// Добавление событий для переключателей фильтров
+var addFiltersEvents = function () {
   [].forEach.call(effectFilters, function (effectFilter) {
     effectFilter.addEventListener('click', function (evt) {
       if (evt.target.value === 'none') {
-        uploadImage.style = '';
+        hideScale();
       } else {
-        activeFilter = evt.target;
-        setImageStyle();
+        showScale();
+        setScaleDefaultState();
       }
+      activeFilter = evt.target;
+      setImageStyle();
     });
   });
 };
 
 pinScale.addEventListener('mouseup', function () {
   setImageStyle();
+});
+
+resizePlus.addEventListener('click', function () {
+  if (currentResizeValue < ResizeParam.MAX) {
+    currentResizeValue = currentResizeValue + ResizeParam.STEP;
+  }
+  setImageStyle();
+});
+
+resizeMinus.addEventListener('click', function () {
+  if (currentResizeValue > ResizeParam.MIN) {
+    currentResizeValue = currentResizeValue - ResizeParam.STEP;
+  }
+  setImageStyle();
+});
+
+var resetInvalidFieldStyle = function (field) {
+  field.style.border = '';
+};
+
+var setInvalidFieldStyle = function (field) {
+  field.style.border = '2px solid #ff0000';
+};
+
+var onCommentFieldInvalid = function () {
+  if (commentField.validity.tooLong) {
+    commentField.setCustomValidity('Длина комментария не более 140 символов');
+  } else {
+    commentField.setCustomValidity('');
+  }
+};
+
+var getUniqueArray = function (arr) {
+  return arr.filter(function (item, index) {
+    return arr.indexOf(item) === index;
+  });
+};
+
+var removeValueFromArray = function (arr, deleteValue) {
+  for (var i = 0; i < arr.length; i++) {
+    if (arr[i] === deleteValue) {
+      arr.splice(i, 1);
+      i--;
+    }
+  }
+  return arr;
+};
+
+var getHashtags = function (str) {
+  var uniqueHashtags = getUniqueArray(str.split(' '));
+  return removeValueFromArray(uniqueHashtags, '');
+};
+
+var checkHashtags = function () {
+  var hashtagsStr = hashtagsField.value.toLowerCase();
+
+  if (hashtagsStr !== '') {
+    var hashtags = getHashtags(hashtagsStr);
+
+    if (hashtags.length > 5) {
+      hashtagsField.setCustomValidity('Введите не более 5 хэш-тегов');
+      return;
+    } else {
+      for (var i = 0; i < hashtags.length; i++) {
+        if (hashtags[i].charAt(0) !== '#') {
+          hashtagsField.setCustomValidity('Добавьте символ # для всех хэш-тегов');
+          return;
+        } else if (hashtags[i].length === 1) {
+          hashtagsField.setCustomValidity('Добавьте название хэш-тега после символа #');
+          return;
+        } else if (hashtags[i].length > 20) {
+          hashtagsField.setCustomValidity('Максимальная длина хэш-тега 20 символов');
+          return;
+        }
+      }
+    }
+  }
+
+  hashtagsField.setCustomValidity('');
+  hashtagsField.value = hashtags.join(' ');
+};
+
+hashtagsField.addEventListener('input', function () {
+  hashtagsField.setCustomValidity('');
+});
+
+commentField.addEventListener('invalid', onCommentFieldInvalid);
+
+commentField.addEventListener('input', function () {
+  commentField.setCustomValidity('');
+});
+
+uploadForm.addEventListener('input', function (evt) {
+  resetInvalidFieldStyle(evt.target);
+});
+
+uploadForm.addEventListener('invalid', function (evt) {
+  setInvalidFieldStyle(evt.target);
+}, true);
+
+uploadSubmit.addEventListener('click', function () {
+  checkHashtags();
 });
 
 // получение данных со списком фотографий
@@ -306,5 +483,7 @@ socialCommentCount.classList.add('visually-hidden');
 // Скрытие загрузчика комментариев в окне с увеличенной фотографией
 socialCommentLoader.classList.add('visually-hidden');
 
+resize.style.zIndex = 1;
+
 // Добавляет события на фильтры
-setFiltersEvents();
+addFiltersEvents();
