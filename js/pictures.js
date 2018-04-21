@@ -352,10 +352,10 @@ var showRange = function () {
 };
 
 // Установка уровня эффекта
-var setRangeState = function (x, value) {
-  pin.style.left = x + 'px';
-  fieldScale.value = value;
-  rangeLevel.style.width = value + '%';
+var setRangeState = function (position, value) {
+  pin.style.left = position + 'px';
+  fieldScale.value = parseInt(value, 10);
+  rangeLevel.style.width = position + 'px';
 };
 
 // Добавление событий для переключателей фильтров
@@ -497,8 +497,11 @@ var checkHashtags = function () {
     }
   }
 
+  if (hashtags) {
+    fieldHashtags.value = hashtags.join(' ');
+  }
+
   fieldHashtags.setCustomValidity('');
-  fieldHashtags.value = hashtags.join(' ');
 };
 
 fieldHashtags.addEventListener('input', function () {
