@@ -1,19 +1,23 @@
 'use strict';
 
 (function () {
-
   var picturesList = document.querySelector('.pictures');
   var picturesFragment = document.createDocumentFragment();
 
   // Отрисовка списка фотографий
-  var renderPictures = function (pictures) {
+  var onLoad = function (pictures) {
     pictures.forEach(function (item) {
-      picturesFragment.appendChild(window.picture.render(item, window.preview.open));
+      var element = window.picture.render(item);
+
+      element.addEventListener('click', function () {
+        window.preview.open(item);
+      });
+
+      picturesFragment.appendChild(element);
     });
 
     picturesList.appendChild(picturesFragment);
   };
 
-  // вывод фотографий на странице
-  renderPictures(window.data);
+  window.backend.load(onLoad, window.backend.showLoadError);
 })();

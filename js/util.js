@@ -5,7 +5,13 @@
 
   // Если нажата клавиша Escape выполнить переданную функцию
   var ifEscEventDoAction = function (evt, action) {
-    if (evt.keyCode === ESC_KEYCODE) {
+    if (evt.keyCode === ESC_KEYCODE && typeof action === 'function') {
+      action();
+    }
+  };
+
+  var ifFunctionDoAction = function (action) {
+    if (typeof action === 'function') {
       action();
     }
   };
@@ -39,12 +45,14 @@
     });
   };
 
+  // получение массива с уникальными элементами
   var getUniqueArray = function (arr) {
     return arr.filter(function (item, index) {
       return arr.indexOf(item) === index;
     });
   };
 
+  // удаление элемента из массива
   var removeValueFromArray = function (arr, deleteValue) {
     for (var i = 0; i < arr.length; i++) {
       if (arr[i] === deleteValue) {
@@ -62,6 +70,7 @@
 
   window.util = {
     ifEscEventDoAction: ifEscEventDoAction,
+    ifFunctionDoAction: ifFunctionDoAction,
     getRandomInt: getRandomInt,
     getRandomArrayElement: getRandomArrayElement,
     getRandomFromRange: getRandomFromRange,
