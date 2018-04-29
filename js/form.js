@@ -1,27 +1,33 @@
 'use strict';
+
 (function () {
   var SCALE_MAX = 100; // %
+  var FILTER_CLASS_PREFIX = 'effects__preview--';
 
-  var filterNameToRange = {
+  var filtersMap = {
     chrome: {
-      min: 0,
-      max: 1
+      minValue: 0,
+      maxValue: 1
     },
     sepia: {
-      min: 0,
-      max: 1
+      minValue: 0,
+      maxValue: 1
     },
     marvin: {
-      min: 0,
-      max: 100
+      minValue: 0,
+      maxValue: 100
     },
     phobos: {
-      min: 0,
-      max: 3
+      minValue: 0,
+      maxValue: 3
     },
     heat: {
-      min: 1,
-      max: 3
+      minValue: 1,
+      maxValue: 3
+    },
+    none: {
+      minValue: 0,
+      maxValue: 0
     }
   };
 
@@ -36,16 +42,12 @@
   var uploadOverlay = uploadForm.querySelector('.img-upload__overlay');
   var uploadClose = uploadForm.querySelector('.img-upload__cancel');
   var uploadedImage = uploadForm.querySelector('.img-upload__preview');
-  var range = uploadForm.querySelector('.img-upload__scale');
-  var rangeScale = uploadForm.querySelector('.img-upload__scale .scale__line');
-  var rangeLevel = uploadForm.querySelector('.scale__level');
 
+  var fieldScale = uploadForm.querySelector('.scale__value');
   var fieldHashtags = uploadForm.querySelector('.text__hashtags');
   var fieldComment = uploadForm.querySelector('.text__description');
   var buttonUpload = uploadForm.querySelector('.img-upload__submit');
 
-  var pin = uploadForm.querySelector('.scale__pin');
-  var fieldScale = uploadForm.querySelector('.scale__value');
   var effectFilters = uploadForm.querySelectorAll('.effects__radio');
   var originalFilter = uploadForm.querySelector('#effect-none');
 
@@ -56,7 +58,7 @@
 
   var currentResizeValue = null;
   var activeFilter = null;
-  var scaleWidth = null;
+  var previousFilterClass = null;
 
   // Нажатие клавиши Esc в окне с загрузкой фотографии
   var onUploadKeydown = function (evt) {
@@ -77,15 +79,17 @@
     uploadOverlay.classList.remove('hidden');
     originalFilter.checked = true;
     activeFilter = originalFilter;
+    setFilterClass(activeFilter.value);
     setFieldResizeValue(ResizeParam.MAX);
     resetFilters();
-    hideRange();
+    window.range.hide();
     document.addEventListener('keydown', onUploadKeydown);
   };
 
   // Закрытие окна с загрузкой фотографии
   var closeUpload = function () {
     uploadOverlay.classList.add('hidden');
+    removePreviousClass();
     document.removeEventListener('keydown', onUploadKeydown);
     fieldFile.value = '';
   };
@@ -102,78 +106,65 @@
 
   // Получение уровня эффекта
   var getEffectVolume = function (effectName, rangeValue) {
-    return (filterNameToRange[effectName].max - filterNameToRange[effectName].min) / SCALE_MAX * rangeValue + filterNameToRange[effectName].min;
+    return (filtersMap[effectName].maxValue - filtersMap[effectName].minValue) / SCALE_MAX * rangeValue + filtersMap[effectName].minValue;
   };
 
   // Получение стилей эффекта
   var getFilterStyles = function (effectName, effectValue) {
     effectValue = window.util.isFloat(effectValue) ? effectValue.toFixed(1) : effectValue;
 
-    var effectToFilterStyles = {
+    var filtersStylesMap = {
       chrome: 'filter: grayscale(' + effectValue + ');',
       sepia: 'filter: sepia(' + effectValue + ');',
       marvin: 'filter: invert(' + Math.round(effectValue) + '%);',
       phobos: 'filter: blur(' + effectValue + 'px);',
       heat: 'filter: brightness(' + effectValue + ');',
-      none: 'filter: ' + effectValue,
-      defaultEffect: 'filter: none'
+      none: 'filter: none'
     };
 
-    return effectToFilterStyles[effectName] || effectToFilterStyles['defaultEffect'];
+    return filtersStylesMap[effectName] || filtersStylesMap['none'];
+  };
+
+  var removePreviousClass = function () {
+    if (previousFilterClass !== null) {
+      uploadedImage.classList.remove(previousFilterClass);
+    }
+  };
+
+  var setFilterClass = function (effectName) {
+    removePreviousClass();
+    var filterClass = FILTER_CLASS_PREFIX + effectName;
+    uploadedImage.classList.add(filterClass);
+    previousFilterClass = filterClass;
   };
 
   // Применение стилей к загруженной фотографии
-  var setImageStyle = function () {
+  var setImageFilter = function () {
     var filterName = activeFilter.value;
     setFieldResizeValue(currentResizeValue);
     var filterValue = (activeFilter !== originalFilter) ? getEffectVolume(activeFilter.value, fieldScale.value) : originalFilter.value;
     uploadedImage.style = getResizeStyle(currentResizeValue) + ';' + getFilterStyles(filterName, filterValue);
   };
 
-  // Скрытие ползунка уровня эффекта
-  var hideRange = function () {
-    range.style.display = 'none';
-  };
-
-  // Показ ползунка уровня эффекта
-  var showRange = function () {
-    range.style.display = '';
-  };
-
-  // Установка уровня эффекта
-  var setRangeState = function (position, value) {
-    pin.style.left = position + 'px';
-    fieldScale.value = Math.round(value);
-    rangeLevel.style.width = position + 'px';
+  // Обработчик события клика по переключателю фильтров
+  var onEffectFilterClick = function (evt) {
+    if (evt.target === originalFilter) {
+      window.range.hide();
+    } else {
+      window.range.show();
+      window.range.setAction(setImageFilter);
+      window.range.setState(SCALE_MAX);
+    }
+    activeFilter = evt.target;
+    setImageFilter();
+    setFilterClass(activeFilter.value);
   };
 
   // Добавление событий для переключателей фильтров
   var addFiltersEvents = function () {
     [].forEach.call(effectFilters, function (effectFilter) {
-      effectFilter.addEventListener('click', function (evt) {
-        if (evt.target === originalFilter) {
-          hideRange();
-        } else {
-          showRange();
-          if (scaleWidth === null) {
-            scaleWidth = getScaleWidth();
-          }
-          setRangeState(scaleWidth, SCALE_MAX);
-        }
-        activeFilter = evt.target;
-        setImageStyle();
-      });
+      effectFilter.addEventListener('click', onEffectFilterClick);
     });
-  };
-
-  // Получение длины шкалы
-  var getScaleWidth = function () {
-    return rangeScale.offsetWidth;
-  };
-
-  // Получение текущего значения на шкале
-  var getRangeValue = function (x, width) {
-    return x / width * 100;
   };
 
   // Сброс стилей неверно заполненных полей формы
@@ -244,49 +235,12 @@
     closeUpload();
   });
 
-  // События перетаскивания ползунка слайдера
-  pin.addEventListener('mousedown', function (evt) {
-    evt.preventDefault();
-
-    var startCoord = evt.clientX;
-
-    var onMouseMove = function (moveEvt) {
-      moveEvt.preventDefault();
-
-      var shift = startCoord - moveEvt.clientX;
-      startCoord = moveEvt.clientX;
-
-      var currentCoord = pin.offsetLeft - shift;
-
-      if (currentCoord < 0) {
-        currentCoord = 0;
-      } else if (currentCoord > scaleWidth) {
-        currentCoord = scaleWidth;
-      }
-
-      var rangeValue = getRangeValue(currentCoord, scaleWidth);
-      setRangeState(currentCoord, rangeValue);
-      setImageStyle();
-    };
-
-    var onMouseUp = function (upEvt) {
-      upEvt.preventDefault();
-      setImageStyle();
-
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-    };
-
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-  });
-
   // Нажатие на кнопку увеличения масштаба
   buttonPlus.addEventListener('click', function () {
     if (currentResizeValue < ResizeParam.MAX) {
       currentResizeValue = currentResizeValue + ResizeParam.STEP;
     }
-    setImageStyle();
+    setImageFilter();
   });
 
   // Нажатие на кнопку уменьшения масштаба
@@ -294,7 +248,7 @@
     if (currentResizeValue > ResizeParam.MIN) {
       currentResizeValue = currentResizeValue - ResizeParam.STEP;
     }
-    setImageStyle();
+    setImageFilter();
   });
 
   // Отмена сообщений валидации при инпуте в поле хэш-тегов
@@ -330,4 +284,12 @@
 
   // Добавляет события на фильтры
   addFiltersEvents();
+
+  uploadForm.addEventListener('submit', function (evt) {
+    evt.preventDefault();
+    window.backend.upload(new FormData(uploadForm), function () {
+      closeUpload();
+      uploadForm.reset();
+    }, window.backend.showUploadError);
+  });
 })();
