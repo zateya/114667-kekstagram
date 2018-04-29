@@ -289,6 +289,7 @@
     evt.preventDefault();
     window.backend.upload(new FormData(uploadForm), function () {
       closeUpload();
+      uploadForm.reset();
     }, window.backend.showUploadError);
   });
 })();
