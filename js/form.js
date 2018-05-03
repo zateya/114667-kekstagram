@@ -2,9 +2,9 @@
 
 (function () {
   var SCALE_MAX = 100; // %
-  var FILTER_CLASS_PREFIX = 'effects__preview--';
+  var EFFECT_CLASS_PREFIX = 'effects__preview--';
 
-  var filtersMap = {
+  var EffectsMap = {
     chrome: {
       minValue: 0,
       maxValue: 1
@@ -48,8 +48,8 @@
   var fieldComment = uploadForm.querySelector('.text__description');
   var buttonUpload = uploadForm.querySelector('.img-upload__submit');
 
-  var effectFilters = uploadForm.querySelectorAll('.effects__radio');
-  var originalFilter = uploadForm.querySelector('#effect-none');
+  var effectToggles = uploadForm.querySelectorAll('.effects__radio');
+  var originalEffect = uploadForm.querySelector('#effect-none');
 
   var resize = uploadForm.querySelector('.img-upload__resize');
   var buttonMinus = resize.querySelector('.resize__control--minus');
@@ -57,8 +57,8 @@
   var fieldResize = resize.querySelector('.resize__control--value');
 
   var currentResizeValue = null;
-  var activeFilter = null;
-  var previousFilterClass = null;
+  var activeEffect = null;
+  var previousEffectClass = null;
 
   // Нажатие клавиши Esc в окне с загрузкой фотографии
   var onUploadKeydown = function (evt) {
@@ -68,8 +68,8 @@
   };
 
   // Сброс фильтров
-  var resetFilters = function () {
-    originalFilter.checked = true;
+  var resetEffects = function () {
+    originalEffect.checked = true;
     currentResizeValue = ResizeParam.MAX;
     uploadedImage.style = '';
   };
@@ -77,11 +77,11 @@
   // Открытие окна с загрузкой фотографии
   var openUpload = function () {
     uploadOverlay.classList.remove('hidden');
-    originalFilter.checked = true;
-    activeFilter = originalFilter;
-    setFilterClass(activeFilter.value);
+    originalEffect.checked = true;
+    activeEffect = originalEffect;
+    setEffectClass(activeEffect.value);
     setFieldResizeValue(ResizeParam.MAX);
-    resetFilters();
+    resetEffects();
     window.range.hide();
     document.addEventListener('keydown', onUploadKeydown);
   };
@@ -90,8 +90,9 @@
   var closeUpload = function () {
     uploadOverlay.classList.add('hidden');
     removePreviousClass();
-    document.removeEventListener('keydown', onUploadKeydown);
+    uploadForm.reset();
     fieldFile.value = '';
+    document.removeEventListener('keydown', onUploadKeydown);
   };
 
   // Установка значения в поле масштаба фотографии
@@ -106,14 +107,14 @@
 
   // Получение уровня эффекта
   var getEffectVolume = function (effectName, rangeValue) {
-    return (filtersMap[effectName].maxValue - filtersMap[effectName].minValue) / SCALE_MAX * rangeValue + filtersMap[effectName].minValue;
+    return (EffectsMap[effectName].maxValue - EffectsMap[effectName].minValue) / SCALE_MAX * rangeValue + EffectsMap[effectName].minValue;
   };
 
   // Получение стилей эффекта
-  var getFilterStyles = function (effectName, effectValue) {
+  var getEffectStyles = function (effectName, effectValue) {
     effectValue = window.util.isFloat(effectValue) ? effectValue.toFixed(1) : effectValue;
 
-    var filtersStylesMap = {
+    var EffectsStylesMap = {
       chrome: 'filter: grayscale(' + effectValue + ');',
       sepia: 'filter: sepia(' + effectValue + ');',
       marvin: 'filter: invert(' + Math.round(effectValue) + '%);',
@@ -122,48 +123,48 @@
       none: 'filter: none'
     };
 
-    return filtersStylesMap[effectName] || filtersStylesMap['none'];
+    return EffectsStylesMap[effectName] || EffectsStylesMap['none'];
   };
 
   var removePreviousClass = function () {
-    if (previousFilterClass !== null) {
-      uploadedImage.classList.remove(previousFilterClass);
+    if (previousEffectClass !== null) {
+      uploadedImage.classList.remove(previousEffectClass);
     }
   };
 
-  var setFilterClass = function (effectName) {
+  var setEffectClass = function (effectName) {
     removePreviousClass();
-    var filterClass = FILTER_CLASS_PREFIX + effectName;
-    uploadedImage.classList.add(filterClass);
-    previousFilterClass = filterClass;
+    var effectClass = EFFECT_CLASS_PREFIX + effectName;
+    uploadedImage.classList.add(effectClass);
+    previousEffectClass = effectClass;
   };
 
   // Применение стилей к загруженной фотографии
-  var setImageFilter = function () {
-    var filterName = activeFilter.value;
+  var setImageEffect = function () {
+    var EffectName = activeEffect.value;
     setFieldResizeValue(currentResizeValue);
-    var filterValue = (activeFilter !== originalFilter) ? getEffectVolume(activeFilter.value, fieldScale.value) : originalFilter.value;
-    uploadedImage.style = getResizeStyle(currentResizeValue) + ';' + getFilterStyles(filterName, filterValue);
+    var EffectValue = (activeEffect !== originalEffect) ? getEffectVolume(activeEffect.value, fieldScale.value) : originalEffect.value;
+    uploadedImage.style = getResizeStyle(currentResizeValue) + ';' + getEffectStyles(EffectName, EffectValue);
   };
 
   // Обработчик события клика по переключателю фильтров
-  var onEffectFilterClick = function (evt) {
-    if (evt.target === originalFilter) {
+  var onEffectToggleClick = function (evt) {
+    if (evt.target === originalEffect) {
       window.range.hide();
     } else {
       window.range.show();
-      window.range.setAction(setImageFilter);
+      window.range.setAction(setImageEffect);
       window.range.setState(SCALE_MAX);
     }
-    activeFilter = evt.target;
-    setImageFilter();
-    setFilterClass(activeFilter.value);
+    activeEffect = evt.target;
+    setImageEffect();
+    setEffectClass(activeEffect.value);
   };
 
   // Добавление событий для переключателей фильтров
-  var addFiltersEvents = function () {
-    [].forEach.call(effectFilters, function (effectFilter) {
-      effectFilter.addEventListener('click', onEffectFilterClick);
+  var addEffectsEvents = function () {
+    [].forEach.call(effectToggles, function (effectToggle) {
+      effectToggle.addEventListener('click', onEffectToggleClick);
     });
   };
 
@@ -240,7 +241,7 @@
     if (currentResizeValue < ResizeParam.MAX) {
       currentResizeValue = currentResizeValue + ResizeParam.STEP;
     }
-    setImageFilter();
+    setImageEffect();
   });
 
   // Нажатие на кнопку уменьшения масштаба
@@ -248,7 +249,7 @@
     if (currentResizeValue > ResizeParam.MIN) {
       currentResizeValue = currentResizeValue - ResizeParam.STEP;
     }
-    setImageFilter();
+    setImageEffect();
   });
 
   // Отмена сообщений валидации при инпуте в поле хэш-тегов
@@ -283,13 +284,15 @@
   resize.style.zIndex = 1;
 
   // Добавляет события на фильтры
-  addFiltersEvents();
+  addEffectsEvents();
+
+  // При отправке формы
+  var onUploadFormSubmit = function () {
+    closeUpload();
+  };
 
   uploadForm.addEventListener('submit', function (evt) {
     evt.preventDefault();
-    window.backend.upload(new FormData(uploadForm), function () {
-      closeUpload();
-      uploadForm.reset();
-    }, window.backend.showUploadError);
+    window.backend.upload(new FormData(uploadForm), onUploadFormSubmit, window.backend.showUploadError);
   });
 })();

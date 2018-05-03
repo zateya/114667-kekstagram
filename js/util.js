@@ -31,20 +31,6 @@
     return Math.floor(min + Math.random() * (max + 1 - min));
   };
 
-  // Удаление дочерних нод
-  var removeChildNodes = function (element) {
-    while (element.firstChild) {
-      element.removeChild(element.firstChild);
-    }
-  };
-
-  // Перемешивание массива
-  var shuffleArray = function (arr) {
-    return arr.sort(function () {
-      return Math.random() - 0.5;
-    });
-  };
-
   // получение массива с уникальными элементами
   var getUniqueArray = function (arr) {
     return arr.filter(function (item, index) {
@@ -74,8 +60,6 @@
     getRandomInt: getRandomInt,
     getRandomArrayElement: getRandomArrayElement,
     getRandomFromRange: getRandomFromRange,
-    removeChildNodes: removeChildNodes,
-    shuffleArray: shuffleArray,
     getUniqueArray: getUniqueArray,
     removeValueFromArray: removeValueFromArray,
     isFloat: isFloat
