@@ -1,21 +1,59 @@
 'use strict';
 
 (function () {
+  var COMMENTS_STEP = 5;
+
   var avatarData = {
     minIndex: 1,
     maxIndex: 6
   };
 
   var bodyElement = document.body;
-  var uploadForm = document.querySelector('.img-upload__form');
   var preview = document.querySelector('.big-picture');
   var socialBlock = document.querySelector('.big-picture__social');
   var socialCommentCount = preview.querySelector('.social__comment-count');
   var socialCommentLoader = preview.querySelector('.social__comment-loadmore');
   var socialFooter = preview.querySelector('.social__footer');
+  var socialCommentInput = preview.querySelector('.social__footer-text');
   var previewClose = preview.querySelector('.big-picture__cancel');
-  var commentsFragment = document.createDocumentFragment();
   var commentsList = preview.querySelector('.social__comments');
+  var comments = [];
+  var commentsLoadedElement = null;
+  var commentsCounter = 0;
+
+  // Нажатие клавиши Esc при открытии большой фотографии
+  var onPreviewKeyDown = function (evt) {
+    if (evt.target !== socialCommentInput) {
+      window.util.ifEscEventDoAction(evt, closePreview);
+    }
+  };
+
+  // Открытие большой фотографии
+  var openPreview = function (pictureData) {
+    bodyElement.classList.add('modal-open');
+    renderPreview(pictureData);
+    preview.classList.remove('hidden');
+    document.addEventListener('keydown', onPreviewKeyDown);
+  };
+
+  // Удаление списка комментариев
+  var removeCommentsList = function () {
+    if (commentsList) {
+      commentsList.remove();
+    }
+  };
+
+  // Закрытие большой фотографии
+  var closePreview = function () {
+    preview.classList.add('hidden');
+    bodyElement.classList.remove('modal-open');
+    comments = [];
+    commentsCounter = 0;
+    removeCommentsList();
+    hideCommentsCounter();
+    hideCommentsLoader();
+    document.removeEventListener('keydown', onPreviewKeyDown);
+  };
 
   // Вывод одного комментария
   var renderComment = function (commentText) {
@@ -29,56 +67,88 @@
     return commentElement;
   };
 
+  // Получение фрагмента комментариев
+  var getComments = function () {
+    var commentsFragment = document.createDocumentFragment();
+    var commentsToShow = comments.splice(0, COMMENTS_STEP);
+    commentsCounter += commentsToShow.length;
+
+    commentsToShow.forEach(function (commentData) {
+      commentsFragment.appendChild(renderComment(commentData));
+    });
+
+    return commentsFragment;
+  };
+
+  // Показ количества загруженных комментариев
+  var showCommentsLoadedCount = function () {
+    commentsLoadedElement.textContent = commentsCounter;
+  };
+
   // Вывод списка комментариев
-  var renderComments = function (comments) {
+  var renderComments = function () {
     commentsList = document.createElement('ul');
     commentsList.classList.add('social__comments');
     socialBlock.insertBefore(commentsList, socialFooter);
 
-    comments.forEach(function (comment) {
-      commentsFragment.appendChild(renderComment(comment));
-    });
-
-    commentsList.appendChild(commentsFragment);
-
-    return commentsList;
-  };
-
-  // Нажатие клавиши Esc при открытии большой фотографии
-  var onPreviewKeyDown = function (evt) {
-    window.util.ifEscEventDoAction(evt, closePreview);
+    commentsList.appendChild(getComments());
+    showCommentsLoadedCount();
   };
 
   // Наполнение данными окна с увеличенной фотографией
   var renderPreview = function (pictureData) {
-    var comments = pictureData.comments.slice();
+    comments = pictureData.comments.slice();
     var authorComment = comments.splice(0, 1);
 
     preview.querySelector('.big-picture__img > img').src = pictureData.url;
     preview.querySelector('.social__caption').textContent = authorComment;
     preview.querySelector('.likes-count').textContent = pictureData.likes;
-    preview.querySelector('.comments-count').textContent = pictureData.comments.length;
+
+    socialCommentCount.innerHTML = '<span class="comments-loaded"></span> из <span class="comments-count"></span>';
+    socialCommentCount.querySelector('.comments-count').textContent = pictureData.comments.length - 1; // вычитаем комментарий автора
+    commentsLoadedElement = socialCommentCount.querySelector('.comments-loaded');
+
+    if (comments.length > COMMENTS_STEP) {
+      showCommentsCounter();
+      showCommentsLoader();
+    }
 
     if (comments.length > 0) {
-      renderComments(comments);
+      renderComments();
     }
   };
 
-  // Открытие большой фотографии
-  var openPreview = function (pictureData) {
-    bodyElement.classList.add('modal-open');
-    renderPreview(pictureData);
-    preview.classList.remove('hidden');
-    document.addEventListener('keydown', onPreviewKeyDown);
+  // при клике на загрузчик комментариев
+  var onLoaderClick = function () {
+    if (comments.length <= COMMENTS_STEP) {
+      hideCommentsLoader();
+    }
+
+    if (comments.length > 0) {
+      commentsList.appendChild(getComments());
+    }
+
+    showCommentsLoadedCount();
   };
 
-  // Закрытие большой фотографии
-  var closePreview = function () {
-    preview.classList.add('hidden');
-    bodyElement.classList.remove('modal-open');
-    commentsList.remove();
-    uploadForm.reset();
-    document.removeEventListener('keydown', onPreviewKeyDown);
+  // Показывает блок с количеством комментариев
+  var showCommentsCounter = function () {
+    socialCommentCount.classList.remove('hidden');
+  };
+
+  // Скрывает блок с количеством комментариев
+  var hideCommentsCounter = function () {
+    socialCommentCount.classList.add('hidden');
+  };
+
+  // Показывает загрузчик комментариев
+  var showCommentsLoader = function () {
+    socialCommentLoader.classList.remove('hidden');
+  };
+
+  // Скрывает загрузчик комментариев
+  var hideCommentsLoader = function () {
+    socialCommentLoader.classList.add('hidden');
   };
 
   // Клик по кнопке Закрыть в окне с большой фотографией
@@ -87,15 +157,19 @@
   });
 
   // удаление списка комментариев в разметке
-  if (commentsList) {
-    commentsList.remove();
-  }
+  removeCommentsList();
 
   // Скрытие количества комментариев в окне с увеличенной фотографией
-  socialCommentCount.classList.add('visually-hidden');
+  hideCommentsCounter();
+
+  // Добавляет событие клика на загрузчик комментариев
+  socialCommentLoader.addEventListener('click', onLoaderClick);
+
+  // Замена курсора на указатель для загрузчика комментариев
+  socialCommentLoader.style.cursor = 'pointer';
 
   // Скрытие загрузчика комментариев в окне с увеличенной фотографией
-  socialCommentLoader.classList.add('visually-hidden');
+  hideCommentsLoader();
 
   window.preview = {
     open: openPreview
