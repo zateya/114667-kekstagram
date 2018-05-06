@@ -38,6 +38,13 @@
     });
   };
 
+  // Удаление елемента из разметки, если он существует
+  var removeElement = function (element) {
+    if (element) {
+      element.remove();
+    }
+  };
+
   // удаление элемента из массива
   var removeValueFromArray = function (arr, deleteValue) {
     for (var i = 0; i < arr.length; i++) {
@@ -61,6 +68,7 @@
     getRandomArrayElement: getRandomArrayElement,
     getRandomFromRange: getRandomFromRange,
     getUniqueArray: getUniqueArray,
+    removeElement: removeElement,
     removeValueFromArray: removeValueFromArray,
     isFloat: isFloat
   };

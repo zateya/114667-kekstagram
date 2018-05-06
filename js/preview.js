@@ -36,20 +36,13 @@
     document.addEventListener('keydown', onPreviewKeyDown);
   };
 
-  // Удаление списка комментариев
-  var removeCommentsList = function () {
-    if (commentsList) {
-      commentsList.remove();
-    }
-  };
-
   // Закрытие большой фотографии
   var closePreview = function () {
     preview.classList.add('hidden');
     bodyElement.classList.remove('modal-open');
     comments = [];
     commentsCounter = 0;
-    removeCommentsList();
+    window.util.removeElement(commentsList);
     hideCommentsCounter();
     hideCommentsLoader();
     document.removeEventListener('keydown', onPreviewKeyDown);
@@ -104,7 +97,7 @@
     preview.querySelector('.social__caption').textContent = authorComment;
     preview.querySelector('.likes-count').textContent = pictureData.likes;
 
-    socialCommentCount.innerHTML = '<span class="comments-loaded"></span> из <span class="comments-count"></span>';
+    socialCommentCount.innerHTML = '<span class="comments-loaded"></span> из <span class="comments-count"></span> комментариев';
     socialCommentCount.querySelector('.comments-count').textContent = pictureData.comments.length - 1; // вычитаем комментарий автора
     commentsLoadedElement = socialCommentCount.querySelector('.comments-loaded');
 
@@ -157,7 +150,7 @@
   });
 
   // удаление списка комментариев в разметке
-  removeCommentsList();
+  window.util.removeElement(commentsList);
 
   // Скрытие количества комментариев в окне с увеличенной фотографией
   hideCommentsCounter();

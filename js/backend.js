@@ -33,8 +33,7 @@
 
   var createErrorMessage = function (errorText) {
     var messageBlock = document.createElement('div');
-    messageBlock.style = 'position: absolute; top: 291px; left: 50%; margin-left: -291px; width: 582px; padding: 50px;'
-                        + 'font-size: 20px; color: #ffe753; background-color: #3c3614; text-align: center;';
+    messageBlock.classList.add('error-message');
     messageBlock.textContent = errorText;
     document.body.appendChild(messageBlock);
   };

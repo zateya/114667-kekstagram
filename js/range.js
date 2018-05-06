@@ -74,8 +74,6 @@
     document.addEventListener('mouseup', onMouseUp);
   });
 
-  pin.style.zIndex = 1;
-
   window.range = {
     show: showRange,
     hide: hideRange,
