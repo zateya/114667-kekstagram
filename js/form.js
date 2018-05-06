@@ -2,6 +2,8 @@
 
 (function () {
   var FILE_TYPES = ['gif', 'jpg', 'jpeg', 'png'];
+  var HASHTAGS_MAX_COUNT = 5;
+  var HASHTAGS_MAX_LENGTH = 20;
 
   var uploadForm = document.querySelector('.img-upload__form');
   var fieldFile = uploadForm.querySelector('#upload-file');
@@ -80,7 +82,7 @@
     if (hashtagsStr !== '') {
       var hashtags = getHashtags(hashtagsStr);
 
-      if (hashtags.length > 5) {
+      if (hashtags.length > HASHTAGS_MAX_COUNT) {
         fieldHashtags.setCustomValidity('Введите не более 5 хэш-тегов');
         return;
       }
@@ -90,11 +92,11 @@
           fieldHashtags.setCustomValidity('Добавьте символ # для всех хэш-тегов');
           return;
         }
-        if (hashtags[i].length === 1) {
+        if (hashtags[i].length === 1) { // выполнится когда первый символ решетка и длина 1 символ
           fieldHashtags.setCustomValidity('Добавьте название хэш-тега после символа #');
           return;
         }
-        if (hashtags[i].length > 20) {
+        if (hashtags[i].length > HASHTAGS_MAX_LENGTH) {
           fieldHashtags.setCustomValidity('Максимальная длина хэш-тега 20 символов');
           return;
         }
@@ -111,6 +113,7 @@
   // Событие изменения загруженной фотографии
   fieldFile.addEventListener('change', function () {
     var file = fieldFile.files[0];
+
     window.upload(file, FILE_TYPES, function (reader) {
       uploadedImage.src = reader.result;
 
@@ -118,6 +121,7 @@
         effectPreview.style.backgroundImage = 'url(' + reader.result + ')';
       });
     });
+
     openUpload();
   });
 
