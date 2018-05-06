@@ -106,5 +106,5 @@
     activeFilter = filters[0];
   };
 
-  window.backend.load(onLoad, window.backend.showLoadError);
+  window.backend.load(onLoad, window.backend.showError);
 })();

@@ -14,6 +14,7 @@
   var fieldComment = uploadForm.querySelector('.text__description');
   var buttonUpload = uploadForm.querySelector('.img-upload__submit');
   var effectPreviews = uploadForm.querySelectorAll('.effects__preview');
+  var errorBlock = document.querySelector('.img-upload__message--error');
 
   // Нажатие клавиши Esc в окне с загрузкой фотографии
   var onUploadKeydown = function (evt) {
@@ -163,8 +164,13 @@
     closeUpload();
   };
 
+  var onUploadError = function () {
+    closeUpload();
+    errorBlock.classList.remove('hidden');
+  };
+
   uploadForm.addEventListener('submit', function (evt) {
     evt.preventDefault();
-    window.backend.upload(new FormData(uploadForm), onUploadFormSubmit, window.backend.showUploadError);
+    window.backend.upload(new FormData(uploadForm), onUploadFormSubmit, onUploadError);
   });
 })();

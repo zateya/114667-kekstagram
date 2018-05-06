@@ -97,7 +97,6 @@
     preview.querySelector('.social__caption').textContent = authorComment;
     preview.querySelector('.likes-count').textContent = pictureData.likes;
 
-    socialCommentCount.innerHTML = '<span class="comments-loaded"></span> из <span class="comments-count"></span> комментариев';
     socialCommentCount.querySelector('.comments-count').textContent = pictureData.comments.length - 1; // вычитаем комментарий автора
     commentsLoadedElement = socialCommentCount.querySelector('.comments-loaded');
 
