@@ -4,7 +4,8 @@
   var SERVER_URL = 'https://js.dump.academy/kekstagram';
   var OK_STATUS = 200;
   var TIMEOUT = 10000;
-  var errorBlock = document.querySelector('.img-upload__message--error');
+
+  var messageBlock = null;
 
   var setupRequest = function (onLoad, onError) {
     var xhr = new XMLHttpRequest();
@@ -31,12 +32,22 @@
     return xhr;
   };
 
+  // функция нажатия Esc при возникновении ошибки
+  var onErrorMessageEscPress = function (evt) {
+    window.util.ifEscEventDoAction(evt, function () {
+      document.body.removeChild(messageBlock);
+
+      document.removeEventListener('keydown', onErrorMessageEscPress);
+    });
+  };
+
   var createErrorMessage = function (errorText) {
-    var messageBlock = document.createElement('div');
-    messageBlock.style = 'position: absolute; top: 291px; left: 50%; margin-left: -291px; width: 582px; padding: 50px;'
-                        + 'font-size: 20px; color: #ffe753; background-color: #3c3614; text-align: center;';
-    messageBlock.textContent = errorText;
+    messageBlock = document.createElement('div');
+    messageBlock.classList.add('error-message');
+    messageBlock.textContent = errorText + '\r\n' + 'нажмите клавишу Escape для продолжения';
     document.body.appendChild(messageBlock);
+
+    document.addEventListener('keydown', onErrorMessageEscPress);
   };
 
   window.backend = {
@@ -52,11 +63,8 @@
       xhr.open('POST', SERVER_URL);
       xhr.send(data);
     },
-    showLoadError: function (message) {
+    showError: function (message) {
       createErrorMessage(message);
-    },
-    showUploadError: function () {
-      errorBlock.classList.remove('hidden');
     }
   };
 

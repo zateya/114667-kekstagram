@@ -6,14 +6,12 @@
   var picturesList = document.querySelector('.pictures');
   var picturesFragment = document.createDocumentFragment();
 
-  var imgFilters = document.querySelector('.img-filters');
-  var filtersForm = imgFilters.querySelector('.img-filters__form');
+  var filtersBlock = document.querySelector('.img-filters');
+  var filters = document.querySelectorAll('.img-filters__button');
+  var activeFilter = null;
 
   var pictures = [];
   var filteredPictures = [];
-  var activeFilter = null;
-
-  var filtersFragments = document.createDocumentFragment();
 
   // Установка активного фильтра
   var setActiveFilter = function (selected) {
@@ -24,36 +22,6 @@
     selected.classList.add('img-filters__button--active');
     activeFilter = selected;
   };
-
-  // Создание фильтра
-  var createFilter = function (purpose, text) {
-    var filter = document.createElement('button');
-    filter.type = 'button';
-    filter.classList.add('img-filters__button');
-    filter.id = '#filter-' + purpose;
-    filter.textContent = text;
-
-    return filter;
-  };
-
-  // Вывод фильтров
-  filtersForm.innerHTML = '';
-  var recomendedFilter = createFilter('recommended', 'Рекомендуемые');
-  filtersFragments.appendChild(recomendedFilter);
-  setActiveFilter(recomendedFilter);
-
-  var popularFilter = createFilter('popular', 'Популярные');
-  filtersFragments.appendChild(popularFilter);
-
-  var discussedFilter = createFilter('discussed', 'Обсуждаемые');
-  filtersFragments.appendChild(discussedFilter);
-
-  var randomFilter = createFilter('random', 'Случайные');
-  filtersFragments.appendChild(randomFilter);
-
-  filtersForm.appendChild(filtersFragments);
-
-  var filters = filtersForm.querySelectorAll('.img-filters__button');
 
   // Сортировка по лайкам
   var sortByLikes = function (arr) {
@@ -83,31 +51,19 @@
     if (activeFilter !== targetFilter) {
       setActiveFilter(targetFilter);
 
-      switch (targetFilter) {
-        case recomendedFilter:
-          filteredPictures = pictures;
-          break;
-        case popularFilter:
-          filteredPictures = sortByLikes(pictures);
-          break;
-        case discussedFilter:
-          filteredPictures = sortByComments(pictures);
-          break;
-        case randomFilter:
-          filteredPictures = sortByRandom(pictures);
-          break;
-        default:
-          filteredPictures = pictures;
-      }
+      var filtersMap = {
+        '#filter-recommended': pictures,
+        '#filter-popular': sortByLikes(pictures),
+        '#filter-discussed': sortByComments(pictures),
+        '#filter-random': sortByRandom(pictures),
+        'default': pictures
+      };
+
+      filteredPictures = filtersMap[targetFilter.id] || filtersMap['default'];
 
       window.debounce(renderPictures, DEBOUNCE_INTERVAL);
     }
   };
-
-  // Добавление события клика на фильтры
-  [].forEach.call(filters, function (filter) {
-    filter.addEventListener('click', onFilterClick);
-  });
 
   // Удаление фото в разметке
   var removePictures = function () {
@@ -140,8 +96,15 @@
     pictures = data;
     filteredPictures = pictures;
     renderPictures();
-    imgFilters.classList.remove('img-filters--inactive');
+    filtersBlock.classList.remove('img-filters--inactive');
+
+    // Добавление события клика на фильтры
+    [].forEach.call(filters, function (filter) {
+      filter.addEventListener('click', onFilterClick);
+    });
+
+    activeFilter = filters[0];
   };
 
-  window.backend.load(onLoad, window.backend.showLoadError);
+  window.backend.load(onLoad, window.backend.showError);
 })();

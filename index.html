@@ -19,9 +19,10 @@
       <h2 class="img-filters__title visually-hidden">Фильтр фотографий</h2>
 
       <form class="img-filters__form" action="index.html" method="get" autocomplete="off">
-        <button type=button class="img-filters__button img-filters__button--active" id="filter-popular">Популярные</button>
-        <button type=button class="img-filters__button" id="filter-new">Новые</button>
-        <button type=button class="img-filters__button" id="filter-discussed">Обсуждаемые</button>
+        <button type="button" class="img-filters__button img-filters__button--active" id="#filter-recommended">Рекомендуемые</button>
+        <button type="button" class="img-filters__button" id="#filter-popular">Популярные</button>
+        <button type="button" class="img-filters__button" id="#filter-discussed">Обсуждаемые</button>
+        <button type="button" class="img-filters__button" id="#filter-random">Случайные</button>
       </form>
     </section>
 
@@ -148,7 +149,7 @@
             <p class="social__caption">Тестим новую камеру! =)</p>
             <p class="social__likes">Нравится <span class="likes-count">356</span></p>
           </div>
-          <div class="social__comment-count">5 из <span class="comments-count">125</span> комментариев</div>
+          <div class="social__comment-count"><span class="comments-loaded">5</span> из <span class="comments-count">125</span> комментариев</div>
           <div class="social__comment-loadmore" tabindex="0">Загрузить еще</div>
           <ul class="social__comments">
             <li class="social__comment social__comment--text">
@@ -208,11 +209,14 @@
 
   <script src="js/backend.js"></script>
   <script src="js/debounce.js"></script>
+  <script src="js/upload.js"></script>
   <script src="js/util.js"></script>
   <script src="js/preview.js"></script>
   <script src="js/picture.js"></script>
   <script src="js/gallery.js"></script>
   <script src="js/range.js"></script>
+  <script src="js/upload-resize.js"></script>
+  <script src="js/effects.js"></script>
   <script src="js/form.js"></script>
 </body>
 </html>
