@@ -5,7 +5,7 @@
 
   // Если нажата клавиша Escape выполнить переданную функцию
   var ifEscEventDoAction = function (evt, action) {
-    if (evt.keyCode === ESC_KEYCODE && typeof action === 'function') {
+    if (evt.keyCode === ESC_KEYCODE) {
       action();
     }
   };
@@ -38,7 +38,7 @@
     });
   };
 
-  // Удаление елемента из разметки, если он существует
+  // Удаление элемента из разметки, если он существует
   var removeElement = function (element) {
     if (element) {
       element.remove();
